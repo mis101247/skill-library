@@ -19,6 +19,7 @@ const {
   trackingName = 'library_share',
 } = Astro.props;
 const siteOrigin = Astro.site ?? Astro.url.origin;
+const siteDomain = new URL(siteOrigin).hostname;
 const canonicalURL = new URL(canonicalPath, siteOrigin).toString();
 ---
 
@@ -30,6 +31,7 @@ const canonicalURL = new URL(canonicalPath, siteOrigin).toString();
   data-content-id={contentId}
   data-cover-image={coverImage || undefined}
   data-placement={placement}
+  data-site-domain={siteDomain}
   data-tracking-name={trackingName}
   data-url={canonicalURL}
 >
@@ -648,6 +650,7 @@ const canonicalURL = new URL(canonicalPath, siteOrigin).toString();
       } else {
         drawTextShareCard(ctx, menu);
       }
+      drawSiteDomain(ctx, menu);
 
       return canvasToBlob(canvas);
     }
@@ -969,6 +972,29 @@ const canonicalURL = new URL(canonicalPath, siteOrigin).toString();
       lines.forEach((line, index) => {
         ctx.fillText(line, x, y + index * lineHeight);
       });
+    }
+
+    function drawSiteDomain(ctx, menu) {
+      const domain = menu.dataset.siteDomain || new URL(menu.dataset.url || window.location.href).hostname;
+      if (!domain) return;
+
+      ctx.save();
+      ctx.font = '600 26px "Noto Sans TC", system-ui, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const paddingX = 20;
+      const labelHeight = 46;
+      const x = WIDTH - 78;
+      const y = HEIGHT - 54;
+      const labelWidth = ctx.measureText(domain).width + paddingX * 2;
+
+      ctx.fillStyle = 'rgba(250, 251, 252, 0.76)';
+      roundRect(ctx, x - labelWidth, y - labelHeight / 2, labelWidth, labelHeight, 23);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(58, 96, 128, 0.78)';
+      ctx.fillText(domain, x - paddingX, y);
+      ctx.restore();
     }
 
     function roundRect(ctx, x, y, width, height, radius) {
