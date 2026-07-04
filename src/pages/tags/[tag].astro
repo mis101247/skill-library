@@ -1,0 +1,56 @@
+---
+import { getCollection } from 'astro:content';
+import ContentCard from '../../components/ContentCard.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatCardKind, sortByPublishedAt } from '../../utils/content';
+import { formatTag, tagMatches } from '../../utils/taxonomy';
+
+export async function getStaticPaths() {
+  const entries = [
+    ...(await getCollection('skills')),
+    ...(await getCollection('guides')),
+  ];
+  const tags = new Set(entries.flatMap((entry) => entry.data.tags.map(formatTag)));
+
+  return [...tags].map((tag) => ({
+    params: { tag },
+  }));
+}
+
+const tag = decodeURIComponent(Astro.params.tag ?? '');
+const entries = sortByPublishedAt([
+  ...(await getCollection('skills')),
+  ...(await getCollection('guides')),
+].filter((entry) => tagMatches(tag, entry.data.tags)));
+---
+
+<BaseLayout title={`#${tag}`} description={`標籤「${tag}」底下的 Skill 與指南內容。`} width="default">
+  <section class="hero">
+    <h1>#{tag}</h1>
+    <p>這個標籤底下共有 {entries.length.toLocaleString('zh-TW')} 篇內容。</p>
+  </section>
+
+  <div class="grid grid--two">
+    {entries.map((entry) => (
+      entry.collection === 'guides' ? (
+        <ContentCard
+          href={`/guides/${entry.id}/`}
+          kind={entry.data.featured ? '精選指南' : '指南'}
+          title={entry.data.title}
+          description={entry.data.description}
+          category={entry.data.category}
+          tags={entry.data.tags}
+        />
+      ) : (
+        <ContentCard
+          href={`/skills/${entry.id}/`}
+          kind={formatCardKind(entry.data.entryType, entry.data.featured)}
+          title={entry.data.title}
+          description={entry.data.description}
+          category={entry.data.category}
+          tags={entry.data.tags}
+        />
+      )
+    ))}
+  </div>
+</BaseLayout>

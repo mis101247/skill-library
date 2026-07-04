@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import SkillListPage from '../../components/SkillListPage.astro';
+import { sortFeaturedFirst } from '../../utils/content';
+
+const skills = sortFeaturedFirst(await getCollection('skills'));
+const pageSize = 60;
+const currentPage = 1;
+const totalPages = Math.max(1, Math.ceil(skills.length / pageSize));
+const pageSkills = skills.slice(0, pageSize);
+---
+
+<SkillListPage
+  skills={pageSkills}
+  allSkills={skills}
+  currentPage={currentPage}
+  totalPages={totalPages}
+  pageSize={pageSize}
+/>

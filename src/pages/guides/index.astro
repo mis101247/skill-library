@@ -1,0 +1,28 @@
+---
+import { getCollection } from 'astro:content';
+import ContentCard from '../../components/ContentCard.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { sortFeaturedFirst } from '../../utils/content';
+
+const guides = sortFeaturedFirst(await getCollection('guides'));
+---
+
+<BaseLayout title="Skill 入門指南" description="從 Prompt 和 Skill 的差別開始，學會把 SKILL.md 用在 ChatGPT、Gemini、Claude 等 AI 助手。" width="wide">
+  <section class="hero">
+    <h1>Skill 入門指南</h1>
+    <p>這裡教你怎麼開始用 Skill，不只是清單。先搞懂 Prompt 和 Skill 的差別，再把喜歡的 <code>SKILL.md</code> 放進你慣用的 AI 助手。</p>
+  </section>
+
+  <section class="grid grid--two">
+    {guides.map((guide) => (
+      <ContentCard
+        href={`/guides/${guide.id}/`}
+        kind={guide.data.featured ? '精選指南' : '指南'}
+        title={guide.data.title}
+        description={guide.data.description}
+        category={guide.data.category}
+        tags={guide.data.tags}
+      />
+    ))}
+  </section>
+</BaseLayout>

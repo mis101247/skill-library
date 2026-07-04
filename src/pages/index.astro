@@ -1,0 +1,165 @@
+---
+import { getCollection } from 'astro:content';
+import ContentCard from '../components/ContentCard.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { formatCardKind, sortFeaturedFirst } from '../utils/content';
+
+const skills = sortFeaturedFirst(await getCollection('skills'));
+const guides = sortFeaturedFirst(await getCollection('guides'));
+const starterGuideIds = [
+  'prompt-vs-skill',
+  'use-skills-in-chatgpt-gemini-claude',
+];
+const starterGuides = starterGuideIds
+  .map((id) => guides.find((guide) => guide.id === id))
+  .filter((guide): guide is NonNullable<typeof guide> => Boolean(guide));
+const featuredSkillIds = [
+  'skill-local-pdf-processing-pro',
+  'skill-local-contract-review',
+  'skill-local-tailored-resume-generator',
+  'skill-local-ppt-generator',
+  'skill-local-video-transcript-downloader',
+  'skill-local-bedtime-story',
+];
+const skillById = new Map(skills.map((skill) => [skill.id, skill]));
+const featuredSkills = featuredSkillIds
+  .map((id) => skillById.get(id))
+  .filter((skill): skill is NonNullable<typeof skill> => Boolean(skill));
+---
+
+<BaseLayout title={SITE_TITLE} description={SITE_DESCRIPTION} width="default">
+  <section class="hero">
+    <h1>Skill 是可以重複使用的 AI 能力包</h1>
+    <p>挑一個、複製 <code>SKILL.md</code>、貼進你的 AI 助手，就能把一套做法重複用在 ChatGPT、Gemini、Claude 或其他 Agent 工作流程裡。</p>
+    <form class="filter-bar home-search" action="/skills/" role="search">
+      <label class="home-search__field">
+        <span class="home-search__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="m21 21-4.3-4.3m2.3-5.2a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
+          </svg>
+        </span>
+        <input name="q" type="search" placeholder="搜尋 Skill，例如：PDF、履歷、簡報…" aria-label="搜尋 Skill" />
+      </label>
+      <button class="button home-search__button" type="submit">搜尋</button>
+    </form>
+    <div class="hero-actions">
+      <a class="button" href="/guides/prompt-vs-skill/">3 分鐘搞懂 Prompt 跟 Skill</a>
+      <a class="button button--secondary" href="/guides/use-skills-in-chatgpt-gemini-claude/">怎麼用在 ChatGPT · Gemini · Claude</a>
+      <a class="quiet-link" href="/skills/">瀏覽全部 Skill</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2>新手必讀</h2>
+        <p>先用兩篇入門指南建立共同語言，再開始挑 Skill 來玩。</p>
+      </div>
+    </div>
+
+    <div class="grid grid--two">
+      {starterGuides.map((guide) => (
+        <ContentCard
+          href={`/guides/${guide.id}/`}
+          kind={guide.data.featured ? '精選指南' : '指南'}
+          title={guide.data.title}
+          description={guide.data.description}
+          category={guide.data.category}
+          tags={guide.data.tags}
+        />
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2>精選實用 Skill</h2>
+        <p>文件、合約、求職、簡報、影片、親子——這些日常任務常用的本地 Skill 都有完整內容，複製就能用。</p>
+      </div>
+      <a class="quiet-link" href="/skills/">更多 Skill</a>
+    </div>
+
+    <div class="grid grid--three" data-mobile-limit="3">
+      {featuredSkills.map((skill) => (
+        <ContentCard
+          href={`/skills/${skill.id}/`}
+          kind={formatCardKind(skill.data.entryType, skill.data.featured)}
+          title={skill.data.title}
+          description={skill.data.description}
+          category={skill.data.category}
+          tags={skill.data.tags}
+        />
+      ))}
+    </div>
+
+    <a class="button button--secondary section-cta" href="/skills/">更多 Skill</a>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2>Prompt / Skill 差在哪？</h2>
+        <p>Prompt 適合一次性的請求；Skill 適合把可重複、要一致的做法保存下來。</p>
+      </div>
+      <a class="quiet-link" href="/guides/prompt-vs-skill/">看完整說明</a>
+    </div>
+
+    <div class="panel">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>特性</th>
+            <th>Prompt</th>
+            <th>Skill</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>本質</th>
+            <td>這次請 AI 幫我做某件事的一段文字。</td>
+            <td>把一套做法打包成可重複使用的能力包，核心通常是 <code>SKILL.md</code>。</td>
+          </tr>
+          <tr>
+            <th>使用方式</th>
+            <td>每次都要重新描述角色、目標、規則與參考資料。</td>
+            <td>先讓 AI 讀懂 Skill，之後同類任務就照同一套流程跑。</td>
+          </tr>
+          <tr>
+            <th>適合情境</th>
+            <td>臨時任務、單次改寫、快速問答。</td>
+            <td>翻譯長文、客製履歷、論文分析、固定格式輸出等會一再重做的任務。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <a class="button button--secondary section-cta" href="/guides/prompt-vs-skill/">看完整說明</a>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2>已整理 Skill</h2>
+        <p>目前從 <code>software-engineering-prompt-repos</code> 中整理出 {skills.length.toLocaleString('zh-TW')} 個 Skill，包含上游索引、技能商店索引與本地落地版 <code>SKILL.md</code>。</p>
+      </div>
+      <a class="quiet-link" href="/skills/">全部 Skill</a>
+    </div>
+
+    <div class="grid grid--two" data-mobile-limit="3">
+      {skills.slice(0, 12).map((skill) => (
+        <ContentCard
+          href={`/skills/${skill.id}/`}
+          kind={formatCardKind(skill.data.entryType, skill.data.featured)}
+          title={skill.data.title}
+          description={skill.data.description}
+          category={skill.data.category}
+          tags={skill.data.tags}
+        />
+      ))}
+    </div>
+
+    <a class="button button--secondary section-cta" href="/skills/">全部 Skill</a>
+  </section>
+</BaseLayout>

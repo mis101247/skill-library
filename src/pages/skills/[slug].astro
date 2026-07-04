@@ -1,0 +1,122 @@
+---
+import { type CollectionEntry, getCollection, render } from 'astro:content';
+import CopyBlock from '../../components/CopyBlock.astro';
+import ShareMenu from '../../components/ShareMenu.astro';
+import TagList from '../../components/TagList.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatEntryType } from '../../utils/content';
+
+export async function getStaticPaths() {
+  const skills = await getCollection('skills');
+  return skills.map((skill) => ({
+    params: { slug: skill.id },
+    props: skill,
+  }));
+}
+
+type Props = CollectionEntry<'skills'>;
+const skill = Astro.props;
+const { Content } = await render(skill);
+const emptyBodyMessage = skill.data.entryType === 'storeCatalog'
+  ? '這筆資料來自 skill repo 的 data/skills.json 技能商店索引；本 workspace 沒有對應的完整 SKILL.md。請開啟來源連結檢視或安裝原始 Skill。'
+  : '這筆資料來自 awesome-agent-skills 的上游索引清單；本 workspace 沒有下載完整 SKILL.md。請開啟來源連結檢視或安裝原始 Skill。';
+const sanitizeFileNamePart = (value: string) =>
+  value
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^\.+/, '')
+    .replace(/[.-]+$/, '')
+    .trim();
+const skillFileNamePart = sanitizeFileNamePart(skill.data.originalName || skill.id) || skill.id;
+const skillDownloadFileName = `${skillFileNamePart}.SKILL.md`;
+---
+
+<BaseLayout title={skill.data.title} description={skill.data.description} width="article">
+  <article class="stack">
+    <header class="hero">
+      <div class="meta-row">
+        <a class="tag" href={skill.data.sourceUrl} target="_blank" rel="noopener noreferrer">
+          {skill.data.sourceRepo}
+        </a>
+        <span class="meta-pill">{formatEntryType(skill.data.entryType)}</span>
+        <span class="meta-pill">{skill.data.license}</span>
+      </div>
+      <h1>{skill.data.title}</h1>
+      <p>{skill.data.description}</p>
+      <TagList tags={skill.data.tags} />
+    </header>
+
+    <section class="panel stack">
+      <h2>啟用時機</h2>
+      <p class="muted">{skill.data.activation}</p>
+    </section>
+
+    <section class="grid grid--two">
+      <div class="panel stack">
+        <h2>適合使用情境</h2>
+        <ul>
+          {skill.data.useCases.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+      <div class="panel stack">
+        <h2>Skill 檔案</h2>
+        <ul>
+          {skill.data.files.map((file) => <li><code>{file}</code></li>)}
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel stack">
+      <h2>工作流程</h2>
+      <ol>
+        {skill.data.workflow.map((step) => <li>{step}</li>)}
+      </ol>
+    </section>
+
+    {skill.data.cautions.length > 0 && (
+      <section class="panel stack">
+        <h2>使用注意事項</h2>
+        <ul>
+          {skill.data.cautions.map((item) => <li>{item}</li>)}
+        </ul>
+      </section>
+    )}
+
+    <section class="panel stack">
+      <h2>來源</h2>
+      <p>原始名稱：<code>{skill.data.originalName}</code></p>
+      <p class="muted">{skill.data.originalDescription}</p>
+      <p class="source-path">{skill.data.localPath}</p>
+      <a class="button button--secondary" href={skill.data.sourceUrl} target="_blank" rel="noopener noreferrer">開啟來源</a>
+    </section>
+
+    <section class="prose">
+      <Content />
+    </section>
+
+    {skill.data.skillBody ? (
+      <CopyBlock
+        title="SKILL.md 內容"
+        body={skill.data.skillBody}
+        copyLabel="複製 Skill 內容"
+        downloadFileName={skillDownloadFileName}
+      />
+    ) : (
+      <section class="panel stack">
+        <h2>來源 Skill</h2>
+        <p class="muted">{emptyBodyMessage}</p>
+        <a class="button button--secondary" href={skill.data.sourceUrl} target="_blank" rel="noopener noreferrer">開啟原始 Skill</a>
+      </section>
+    )}
+
+    <ShareMenu
+      title={skill.data.title}
+      description={skill.data.description}
+      contentId={`skill-${skill.id}`}
+      canonicalPath={`/skills/${skill.id}/`}
+      placement="skill_detail_footer"
+      trackingName="skill_library_share"
+    />
+  </article>
+</BaseLayout>

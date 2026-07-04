@@ -1,0 +1,91 @@
+---
+interface Props {
+  body: string;
+  copyLabel: string;
+  title?: string;
+  downloadFileName?: string;
+  downloadLabel?: string;
+}
+
+const {
+  body,
+  copyLabel,
+  title = '可複製內容',
+  downloadFileName = 'SKILL.md',
+  downloadLabel = '下載 SKILL.md',
+} = Astro.props;
+---
+
+<section class="copy-block" data-copy-block>
+  <div class="copy-toolbar">
+    <strong>{title}</strong>
+    <div class="copy-toolbar__meta">
+      <button class="copy-button" type="button" data-copy-button>{copyLabel}</button>
+      <button class="copy-button button--secondary" type="button" data-download-button data-download-file-name={downloadFileName}>{downloadLabel}</button>
+    </div>
+  </div>
+  <pre><code>{body}</code></pre>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-copy-block]').forEach((block) => {
+    const button = block.querySelector<HTMLButtonElement>('[data-copy-button]');
+    const downloadButton = block.querySelector<HTMLButtonElement>('[data-download-button]');
+    const text = block.querySelector('code')?.textContent ?? '';
+
+    async function copyText(value: string) {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        return;
+      }
+
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.setAttribute('readonly', 'true');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '0';
+      document.body.append(textarea);
+      textarea.select();
+
+      try {
+        const copied = document.execCommand('copy');
+        if (!copied) throw new Error('copy command failed');
+      } finally {
+        textarea.remove();
+      }
+    }
+
+    if (button) {
+      const originalLabel = button.textContent ?? '複製內容';
+
+      button.addEventListener('click', async () => {
+        try {
+          await copyText(text);
+          button.textContent = '已複製';
+        } catch {
+          button.textContent = '複製失敗，請手動選取';
+        }
+
+        window.setTimeout(() => {
+          button.textContent = originalLabel;
+        }, 1600);
+      });
+    }
+
+    downloadButton?.addEventListener('click', () => {
+      const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = downloadButton.dataset.downloadFileName || 'SKILL.md';
+      document.body.append(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 0);
+    });
+  });
+</script>

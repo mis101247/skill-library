@@ -1,0 +1,222 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContentCard from './ContentCard.astro';
+import PaginationNav from './PaginationNav.astro';
+import { formatCardKind } from '../utils/content';
+import { formatCategory, formatTags, sortCategories, tagSearchText } from '../utils/taxonomy';
+
+interface Props {
+  skills: CollectionEntry<'skills'>[];
+  allSkills: CollectionEntry<'skills'>[];
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+}
+
+const { skills, allSkills, currentPage, totalPages, pageSize } = Astro.props;
+const categories = sortCategories(allSkills.map((entry) => entry.data.category));
+const searchIndex = allSkills.map((skill) => ({
+  title: skill.data.title,
+  description: skill.data.description,
+  category: formatCategory(skill.data.category),
+  tags: formatTags(skill.data.tags),
+  searchText: [
+    skill.data.title,
+    skill.data.description,
+    skill.data.category,
+    formatCategory(skill.data.category),
+    skill.data.originalName,
+    tagSearchText(skill.data.tags),
+  ].join(' ').toLowerCase(),
+  href: `/skills/${skill.id}/`,
+  kind: formatCardKind(skill.data.entryType, skill.data.featured),
+}));
+const pageTitle = currentPage === 1 ? 'Skill' : `Skill 第 ${currentPage.toLocaleString('zh-TW')} 頁`;
+const pageDescription = '整理 software-engineering-prompt-repos 底下可直接追溯來源的 Agent Skills。';
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} width="default">
+  <section class="hero">
+    <h1>Skill</h1>
+    <p>這裡收錄 repo 裡找得到的完整 <code>SKILL.md</code>、<code>awesome-agent-skills</code> 上游索引，以及 <code>skill</code> repo 的技能商店與本地落地版。頁面上的標題、用途、說明與 Skill 內容都會整理成台灣慣用正體中文；來源連結會保留下來。</p>
+  </section>
+
+  <section class="filter-bar" aria-label="Skill 搜尋與篩選">
+    <input id="search" type="search" placeholder="搜尋 Skill 名稱、用途或標籤" aria-label="搜尋 Skill" />
+    <select id="category" aria-label="依分類篩選">
+      <option value="">所有類別</option>
+      {categories.map((category) => <option value={category}>{category}</option>)}
+    </select>
+  </section>
+
+  <p class="filter-empty" id="empty">沒有符合條件的 Skill。</p>
+
+  <div id="paged-content">
+    <PaginationNav
+      basePath="/skills/"
+      currentPage={currentPage}
+      totalPages={totalPages}
+      pageSize={pageSize}
+      totalItems={allSkills.length}
+      label="Skill 分頁"
+    />
+
+    <section class="grid grid--two" id="items">
+      {skills.map((skill) => (
+        <ContentCard
+          href={`/skills/${skill.id}/`}
+          kind={formatCardKind(skill.data.entryType, skill.data.featured)}
+          title={skill.data.title}
+          description={skill.data.description}
+          category={skill.data.category}
+          tags={skill.data.tags}
+        />
+      ))}
+    </section>
+
+    <PaginationNav
+      basePath="/skills/"
+      currentPage={currentPage}
+      totalPages={totalPages}
+      pageSize={pageSize}
+      totalItems={allSkills.length}
+      label="Skill 分頁"
+    />
+  </div>
+
+  <section class="grid grid--two" id="search-results" hidden></section>
+
+  <nav class="pagination" id="search-pagination" aria-label="搜尋結果分頁" hidden>
+    <p id="search-summary"></p>
+    <div class="pagination__controls">
+      <button class="button button--secondary" type="button" data-search-prev>上一頁</button>
+      <span id="search-indicator">第 1 頁</span>
+      <button class="button button--secondary" type="button" data-search-next>下一頁</button>
+    </div>
+  </nav>
+
+  <script is:inline define:vars={{ searchIndex, pageSize }}>
+    const search = document.querySelector('#search');
+    const category = document.querySelector('#category');
+    const empty = document.querySelector('#empty');
+    const pagedContent = document.querySelector('#paged-content');
+    const results = document.querySelector('#search-results');
+    const searchPagination = document.querySelector('#search-pagination');
+    const searchSummary = document.querySelector('#search-summary');
+    const searchIndicator = document.querySelector('#search-indicator');
+    const prevSearch = document.querySelector('[data-search-prev]');
+    const nextSearch = document.querySelector('[data-search-next]');
+    const params = new URLSearchParams(window.location.search);
+    let searchPage = 1;
+
+    if (params.get('q')) search.value = params.get('q');
+    if (params.has('category')) category.value = params.get('category');
+
+    function createResultCard(entry) {
+      const article = document.createElement('article');
+      article.className = 'content-card';
+
+      const link = document.createElement('a');
+      link.className = 'content-card__main';
+      link.href = entry.href;
+
+      const kind = document.createElement('span');
+      kind.className = 'content-card__kind';
+      kind.textContent = entry.kind;
+
+      const title = document.createElement('h3');
+      title.textContent = entry.title;
+
+      const description = document.createElement('p');
+      description.textContent = entry.description;
+
+      link.append(kind, title, description);
+      article.append(link);
+
+      if (entry.tags.length > 0) {
+        const chips = document.createElement('div');
+        chips.className = 'chip-row';
+
+        entry.tags.slice(0, 4).forEach((tagText) => {
+          const tag = document.createElement('a');
+          tag.className = 'tag';
+          tag.href = `/tags/${encodeURIComponent(tagText)}/`;
+          tag.textContent = tagText;
+          chips.append(tag);
+        });
+
+        article.append(chips);
+      }
+
+      return article;
+    }
+
+    function matchingItems() {
+      const query = search.value.trim().toLowerCase();
+      const categoryValue = category.value;
+
+      return searchIndex.filter((entry) => {
+        return (
+          (!query || entry.searchText.includes(query)) &&
+          (!categoryValue || entry.category === categoryValue)
+        );
+      });
+    }
+
+    function renderSearch() {
+      const query = search.value.trim();
+      const hasFilter = query.length > 0 || category.value;
+      pagedContent.hidden = hasFilter;
+      results.hidden = !hasFilter;
+      searchPagination.hidden = !hasFilter;
+      empty.style.display = 'none';
+
+      if (!hasFilter) {
+        results.replaceChildren();
+        return;
+      }
+
+      const matches = matchingItems();
+      const totalSearchPages = Math.max(1, Math.ceil(matches.length / pageSize));
+      searchPage = Math.min(searchPage, totalSearchPages);
+      const start = (searchPage - 1) * pageSize;
+      const visibleItems = matches.slice(start, start + pageSize);
+      results.replaceChildren(...visibleItems.map(createResultCard));
+
+      empty.style.display = matches.length === 0 ? 'block' : 'none';
+      const firstVisible = matches.length === 0 ? 0 : start + 1;
+      const lastVisible = Math.min(start + pageSize, matches.length);
+      searchSummary.textContent = matches.length === 0
+        ? '沒有符合條件的 Skill'
+        : `搜尋結果第 ${firstVisible.toLocaleString('zh-TW')}-${lastVisible.toLocaleString('zh-TW')} 筆，共 ${matches.length.toLocaleString('zh-TW')} 筆`;
+      searchIndicator.textContent = `第 ${searchPage.toLocaleString('zh-TW')} / ${totalSearchPages.toLocaleString('zh-TW')} 頁`;
+      prevSearch.disabled = searchPage <= 1;
+      nextSearch.disabled = searchPage >= totalSearchPages;
+    }
+
+    function renderFirstPage() {
+      searchPage = 1;
+      renderSearch();
+    }
+
+    search.addEventListener('input', renderFirstPage);
+    search.addEventListener('change', renderFirstPage);
+    category.addEventListener('input', renderFirstPage);
+    category.addEventListener('change', renderFirstPage);
+
+    prevSearch.addEventListener('click', () => {
+      searchPage -= 1;
+      renderSearch();
+      results.scrollIntoView({ block: 'start' });
+    });
+
+    nextSearch.addEventListener('click', () => {
+      searchPage += 1;
+      renderSearch();
+      results.scrollIntoView({ block: 'start' });
+    });
+
+    renderSearch();
+  </script>
+</BaseLayout>
