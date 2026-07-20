@@ -3,10 +3,11 @@ import { getCollection } from 'astro:content';
 import ContentCard from '../components/ContentCard.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-import { formatCardKind, sortFeaturedFirst } from '../utils/content';
+import { formatCardKind, sortByPublishedAt, sortFeaturedFirst } from '../utils/content';
 
 const skills = sortFeaturedFirst(await getCollection('skills'));
 const guides = sortFeaturedFirst(await getCollection('guides'));
+const latestGuides = sortByPublishedAt(guides).slice(0, 3);
 const starterGuideIds = [
   'prompt-vs-skill',
   'use-skills-in-chatgpt-gemini-claude',
@@ -47,6 +48,29 @@ const featuredSkills = featuredSkillIds
       <a class="button" href="/guides/prompt-vs-skill/">3 分鐘搞懂 Prompt 跟 Skill</a>
       <a class="button button--secondary" href="/guides/use-skills-in-chatgpt-gemini-claude/">怎麼用在 ChatGPT · Gemini · Claude</a>
       <a class="quiet-link" href="/skills/">瀏覽全部 Skill</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <h2>最新文章</h2>
+        <p>最近新增的教學與工具介紹，從最新一篇開始看。</p>
+      </div>
+      <a class="quiet-link" href="/guides/">全部文章</a>
+    </div>
+
+    <div class="grid grid--three">
+      {latestGuides.map((guide) => (
+        <ContentCard
+          href={`/guides/${guide.id}/`}
+          kind="文章"
+          title={guide.data.title}
+          description={guide.data.description}
+          category={guide.data.category}
+          tags={guide.data.tags}
+        />
+      ))}
     </div>
   </section>
 
