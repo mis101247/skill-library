@@ -9,8 +9,8 @@ featured: true
 publishedAt: 2026-07-23
 updatedAt: 2026-07-23
 guideType: "workflow"
-coverImage: "https://images.keyo.tw/skill-library/guides/matt-pocock-skills-debug-maintain.webp"
-coverImageAlt: "夜間開發桌上有人一邊操作鍵盤，一邊在重現檢查表上做記號"
+coverImage: "https://skills.keyo.tw/images/guides/matt-pocock-skills-debug-maintain.webp"
+coverImageAlt: "夜間無人的開發工作桌，螢幕顯示程式碼，鍵盤旁放著除錯檢查筆記"
 learningGoals: ["建立會對特定 bug 變紅的回饋迴圈", "把外部 issue 移到可執行的 triage 狀態", "用共同架構詞彙找出真正值得做的重整"]
 prerequisites: ["已設定 issue tracker 與 triage labels", "能執行專案測試、CLI 或本地服務"]
 relatedSkills: ["awesome-agent-skills-mattpocock-skills"]
