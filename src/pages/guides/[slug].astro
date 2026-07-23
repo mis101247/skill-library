@@ -22,7 +22,12 @@ const skills = (await getCollection('skills')).filter((skill) =>
 );
 ---
 
-<BaseLayout title={guide.data.title} description={guide.data.description} width="article">
+<BaseLayout
+  title={guide.data.title}
+  description={guide.data.description}
+  image={guide.data.coverImage}
+  width="article"
+>
   <article class="stack">
     <header class="hero">
       <div class="meta-row">
@@ -33,6 +38,17 @@ const skills = (await getCollection('skills')).filter((skill) =>
       <p>{guide.data.description}</p>
       <TagList tags={guide.data.tags} />
     </header>
+
+    {guide.data.coverImage && (
+      <img
+        class="guide-cover"
+        src={guide.data.coverImage}
+        alt={guide.data.coverImageAlt || guide.data.title}
+        width="1536"
+        height="1024"
+        decoding="async"
+      />
+    )}
 
     <section class="grid grid--two">
       <div class="panel stack">
@@ -81,6 +97,7 @@ const skills = (await getCollection('skills')).filter((skill) =>
       description={guide.data.description}
       contentId={`guide-${guide.id}`}
       canonicalPath={`/guides/${guide.id}/`}
+      coverImage={guide.data.coverImage}
       placement="guide_detail_footer"
       trackingName="skill_library_share"
     />

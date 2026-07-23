@@ -22,6 +22,9 @@ const guides = sortFeaturedFirst(await getCollection('guides'));
         description={guide.data.description}
         category={guide.data.category}
         tags={guide.data.tags}
+        thumbnailUrl={guide.data.coverImage}
+        thumbnailAlt={guide.data.coverImageAlt}
+        showThumbnail={Boolean(guide.data.coverImage)}
       />
     ))}
   </section>

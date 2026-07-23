@@ -99,6 +99,8 @@ Catalog 來源：
 - `publishedAt`
 - `updatedAt`
 - `guideType`
+- `coverImage`
+- `coverImageAlt`
 - `learningGoals`
 - `prerequisites`
 - `relatedSkills`

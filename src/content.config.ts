@@ -48,6 +48,8 @@ const guides = defineCollection({
     publishedAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
     guideType: z.string().default('concept'),
+    coverImage: httpUrl.optional(),
+    coverImageAlt: z.string().default(''),
     learningGoals: z.array(z.string()).default([]),
     prerequisites: z.array(z.string()).default([]),
     relatedSkills: z.array(z.string()).default([]),
