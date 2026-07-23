@@ -1,40 +1,40 @@
 ---
-title: "別再替 Prompt 打分：用 Fable 5 重做 Prompt Optimizer Skill"
-description: "Prompt 不夠完整時，AI 應該直接做、採用合理假設，還是停下來追問？這篇拆解 Prompt Optimizer Skill 的設計與完整內容。"
+title: "讓 AI Agent 先弄懂你的需求：Prompt Optimizer Skill"
+description: "Prompt 不夠完整時，AI Agent 該直接做還是先問？Prompt Optimizer 會判斷資訊是否足夠，減少模糊與不必要的來回。"
 category: "workflow"
-tags: ["prompt", "skill", "Fable 5", "工作流程"]
+tags: ["prompt", "skill", "AI Agent", "需求釐清", "工作流程"]
 difficulty: "中階"
 timeEstimate: "10 分鐘"
 featured: false
 publishedAt: 2026-07-23
 updatedAt: 2026-07-23
 guideType: "workflow-design"
-learningGoals: ["判斷 AI 什麼時候該直接做、什麼時候才需要追問", "把過度細密的提示評分改成三路任務分流", "建立並在 Codex 呼叫 Prompt Optimizer Skill"]
+learningGoals: ["判斷 AI Agent 什麼時候該直接做、什麼時候才需要追問", "用三路任務分流減少模糊與無效來回", "建立並在 Codex 呼叫 Prompt Optimizer Skill"]
 prerequisites: ["知道 Prompt 與 Skill 的基本差異", "使用支援 SKILL.md 或自訂指令的 AI 助手"]
 relatedSkills: []
 ---
 
-我最早做 Prompt Optimizer 時，替它設計了一張 10 分量表。模型收到任務後，要先檢查目標、範圍、格式、上下文和成功標準，再依分數決定直接執行、聲明假設，或要求使用者補資料。
+AI Agent 遇到模糊需求時，常走向兩個極端。有些會先問一長串問題，明明已經可以開始，卻遲遲不動手。另一些則一路猜到底，做到最後才發現方向錯了。
 
-這套方法看起來很謹慎。實際用幾次，卻有點像在便利商店買咖啡之前先填需求訪談表。
+Prompt Optimizer 放在這兩種反應中間。它先判斷現有資訊是否足夠。能做就直接做，只缺次要細節就採用合理假設，少了會改變結果的資料才回來確認。
 
-使用者只是說「幫我把這段介紹改自然一點」，模型明明已經知道要做什麼，還是在內部替五個項目打分。有些版本甚至會把健檢結果完整貼出來，接著請使用者改寫 Prompt。原本想減少誤會，最後反而多了一輪對話。
+我最早設計這份 Skill 時，替它做了一張 10 分量表。模型收到任務後，要先檢查目標、範圍、格式、上下文和成功標準，再依分數決定要不要追問。
 
-Fable 5 上線後，我決定把這套 Skill 重做一次。第一個動作不是加規則，而是把評分表刪掉。
+這套方法看起來很謹慎。實際用幾次，卻有點像在便利商店買咖啡之前先填需求訪談表。使用者只是說「幫我把這段介紹改自然一點」，AI Agent 明明知道要做什麼，還是在內部跑完整套評分。
 
-## Fable 5 改變了哪些設計前提
+後來我用 Fable 5 協助重新整理這份 Skill，第一個動作就是刪掉評分表。Fable 5 是製作時使用的工具，Prompt Optimizer 本身不依賴特定模型，也不是 Fable 5 專用 Skill。
 
-Anthropic 在 Fable 5 的提示指南裡，特別提到它處理長任務、複雜指令和模糊資訊的能力比前代更好。較短的行為指令通常就能發揮作用。官方也建議重新檢查為舊模型撰寫的 Skills，因為過度規定每個步驟，可能限制新模型原本做得到的判斷。
+## 模糊需求不一定需要追問
 
-這不代表 Prompt 可以隨便寫，也不代表模型永遠不必提問。差別在於，Skill 不需要把所有模糊之處都當成阻礙。它只要判斷一件事：
+需求不夠完整時，先看缺少的資訊會不會改變結果。Prompt Optimizer 不把每個空白都當成阻礙，它只判斷一件事：
 
 > 現在缺少的資訊，會不會實際改變結果或造成不該發生的動作？
 
 如果不會，就直接做。若只是少了次要細節，可以採用合理假設。只有缺少的資料會改變結果、擴大範圍，或牽涉難以復原的外部操作時，才停下來問能解除阻礙的問題。
 
-這個判斷方式比較接近交辦工作給一位熟悉業務的同事。你不會要求對方替每句話評分，但會希望他知道什麼可以自行判斷，什麼必須回來確認。
+這比較像把工作交給一位熟悉業務的同事。你不會要求對方替每句話評分，但會希望他知道什麼可以自行判斷，什麼必須回來確認。AI Agent 能分清楚這條線，才不會把時間花在無效追問，也不會因為猜錯方向而整份重做。
 
-## 從 10 分量表改成三路分流
+## 從五項評分改成三路分流
 
 新版 Prompt Optimizer 只保留三種處理方式。
 
@@ -243,5 +243,4 @@ Prompt Optimizer 可以減少沒有必要的追問，卻不能替使用者決定
 
 ## 參考資料
 
-- [Anthropic：Prompting Claude Fable 5](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5)
 - [OpenAI：Build skills](https://learn.chatgpt.com/docs/build-skills.md)
